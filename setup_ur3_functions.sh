@@ -28,7 +28,7 @@ ur3() {
         "run")
             case "$2" in
                 "driver")
-                    ros2 launch ur_robot_driver ur_control.launch.py ur_type:=ur3e robot_ip:=192.168.1.102 kinematics_params_file:="${HOME}/ur3e_calibration.yaml" launch_rviz:=false headless_mode:=true "${@:3}"
+                    ros2 launch ur_robot_driver ur_control.launch.py ur_type:=ur3e robot_ip:=192.168.1.102 kinematics_params_file:="${HOME}/ur3e_calibration.yaml" launch_rviz:=false use_tool_communication:=true "${@:3}"
                     ;;
                 "moveit")
                     ros2 launch ur_moveit_config ur_moveit.launch.py ur_type:=ur3e launch_rviz:=false "${@:3}"
