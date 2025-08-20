@@ -1,6 +1,6 @@
 # UR3e Robot Control System
 
-*Created by Mohammad Hossein Salari for Industrial Robotics and Automated Systems*  
+*Created by Mohammadhossein Salari for Industrial Robotics and Automated Systems*  
 *UEF Summer School Courses 2025*
 
 ![It's not much, but it's honest work](assets/But_It's_Honest_Work.jpg)
