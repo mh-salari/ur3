@@ -54,11 +54,6 @@ sudo apt upgrade
 sudo apt install ros-jazzy-desktop
 ```
 
-### Setup environment
-```bash
-echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
-source ~/.bashrc
-```
 
 ---
 
@@ -93,17 +88,7 @@ sudo apt install ros-jazzy-xacro
 
 ---
 
-## Step 4: Install Python Dependencies
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-```bash
-source ~/.bashrc
-```
-
-## Step 5: Download and Setup Python CLI
+## Step 4: Download UR3 Repository
 
 Go to home directory and clone the UR3 repository:
 ```bash
@@ -114,9 +99,23 @@ cd ~
 git clone https://github.com/mh-salari/ur3.git
 ```
 
+---
+
+## Step 5: Install Python Dependencies
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+```bash
+source ~/.bashrc
+```
+
+## Step 6: Setup Python CLI
+
 Navigate to the cloned repository:
 ```bash
-cd ur3/code/
+cd ~/ur3/code/
 ```
 
 Install dependencies using uv:
@@ -131,7 +130,57 @@ chmod +x ur3e_cli.py
 
 ---
 
-## Step 6: Verify Installation
+## Step 7: Setup Shell Environment
+
+Configure ROS 2 environment and create shortcuts for UR3 commands.
+
+### Run the setup script:
+
+Navigate to the UR3 directory:
+```bash
+cd ~/ur3/
+```
+
+Make the setup script executable:
+```bash
+chmod +x setup_ur3_functions.sh
+```
+
+Run the setup script:
+```bash
+./setup_ur3_functions.sh
+```
+
+Reload shell configuration:
+```bash
+source ~/.bashrc
+```
+
+### Available commands after setup:
+
+Start UR3 driver with calibration:
+```bash
+ur3 run driver
+```
+
+Start UR3 driver with RViz (optional):
+```bash
+ur3 run driver launch_rviz:=true
+```
+
+Start MoveIt:
+```bash
+ur3 run moveit
+```
+
+Start MoveIt with RViz (optional):
+```bash
+ur3 run moveit launch_rviz:=true
+```
+
+---
+
+## Step 8: Verify Installation
 
 ### Test ROS 2 installation
 Source ROS 2 and run diagnostics:
@@ -163,7 +212,7 @@ Should show ur-related packages including `ur_robot_driver` and `ur_moveit_confi
 
 ---
 
-## Step 7: Robot Setup
+## Step 9: Robot Setup
 
 ### External Control URCap Installation
 
@@ -198,7 +247,7 @@ Should show ur-related packages including `ur_robot_driver` and `ur_moveit_confi
 
 ---
 
-## Step 8: Network Configuration
+## Step 10: Network Configuration
 
 1. **Connect robot and PC via Ethernet cable** (direct connection recommended)
 
@@ -215,7 +264,7 @@ Should show ur-related packages including `ur_robot_driver` and `ur_moveit_confi
 
 ---
 
-## Step 9: Download Robot Calibration (Recommended)
+## Step 11: Download Robot Calibration (Recommended)
 
 Each UR robot has unique factory calibration data that improves positional accuracy. This step downloads the calibration directly from your robot.
 
@@ -231,63 +280,6 @@ Each UR robot has unique factory calibration data that improves positional accur
 3. **Calibration file will be saved** to `~/ur3e_calibration.yaml`
 
 **Note:** Without this calibration, end effector positions may be off by several centimeters. Keep this file for future use.
-
----
-
-## Step 10: Create Convenient Bash Aliases
-
-Create shortcuts for the long UR3 commands to make daily use easier.
-
-### Create a ur3 function in your shell configuration:
-
-```bash
-cat >> ~/.bashrc << 'EOF'
-ur3() {
-    case "$1" in
-        "run")
-            case "$2" in
-                "driver")
-                    ros2 launch ur_robot_driver ur_control.launch.py ur_type:=ur3 robot_ip:=192.168.1.102 kinematics_params_file:="${HOME}/ur3e_calibration.yaml" "${@:3}"
-                    ;;
-                "moveit")
-                    ros2 launch ur_moveit_config ur_moveit.launch.py ur_type:=ur3 "${@:3}"
-                    ;;
-                *)
-                    echo "Usage: ur3 run [driver|moveit] [options]"
-                    ;;
-            esac
-            ;;
-        *)
-            echo "Usage: ur3 run [driver|moveit] [options]"
-            ;;
-    esac
-}
-EOF
-```
-
-```bash
-source ~/.bashrc
-```
-
-### Usage after installation:
-
-```bash
-ur3 run driver
-```
-
-```bash
-ur3 run driver launch_rviz:=true
-```
-
-```bash
-ur3 run moveit
-```
-
-```bash
-ur3 run moveit launch_rviz:=true
-```
-
-**Note:** The `ur3 run driver` command automatically includes your calibration file for improved accuracy. Add `launch_rviz:=true` when you want to open RViz.
 
 ---
 
