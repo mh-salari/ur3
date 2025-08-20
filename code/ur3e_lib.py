@@ -203,7 +203,9 @@ class UR3eController(Node):
 
             goal_handle = future.result()
             if not goal_handle or not goal_handle.accepted:
-                self.get_logger().error(" SAFETY: Joint movement goal REJECTED by MoveIt")
+                self.get_logger().error(
+                    " SAFETY: Joint movement goal REJECTED by MoveIt"
+                )
                 self.get_logger().error("   Possible reasons:")
                 self.get_logger().error("   • Position would cause self-collision")
                 self.get_logger().error("   • Joint limits exceeded")
@@ -225,9 +227,9 @@ class UR3eController(Node):
             if not result or not result.result:
                 self.get_logger().error(" FAILED: No result received from MoveIt")
                 return False
-                
+
             success = result.result.error_code.val == 1  # MoveItErrorCodes::SUCCESS
-        
+
         except Exception as e:
             self.get_logger().error(f" EXCEPTION during MoveIt operation: {e}")
             return False
@@ -245,7 +247,9 @@ class UR3eController(Node):
                 self.get_logger().error(
                     " CONTROL_FAILED: Robot hardware communication failed!"
                 )
-                self.get_logger().error("   • Check if robot is powered on and connected")
+                self.get_logger().error(
+                    "   • Check if robot is powered on and connected"
+                )
                 self.get_logger().error("   • Verify network connection to robot")
                 self.get_logger().error("   • Ensure robot is not in protective stop")
                 self.get_logger().error("   • Check if UR driver is running properly")
@@ -258,9 +262,7 @@ class UR3eController(Node):
             elif error_code == -11:
                 self.get_logger().error(" INVALID: Joint constraints are invalid")
             elif error_code == -2:
-                self.get_logger().error(
-                    " NO PATH: Could not find safe path to target"
-                )
+                self.get_logger().error(" NO PATH: Could not find safe path to target")
             elif error_code == -7:
                 self.get_logger().error(" TIMEOUT: Planning took too long")
             else:

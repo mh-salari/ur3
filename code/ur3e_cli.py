@@ -11,10 +11,9 @@ Usage:
 Then follow the interactive prompts to control the robot.
 """
 
-import sys
-import readline  # Enable arrow keys and command history in input()
 import rclpy
 import subprocess
+import readline  # Enable arrow keys and command history in input()
 from ur3e_lib import UR3eController
 
 
@@ -29,8 +28,9 @@ class UR3eCLI:
         """Kill any existing CLI nodes to prevent conflicts"""
         try:
             # Kill any existing ur3e_cli_node processes
-            result = subprocess.run(['pkill', '-f', 'ur3e__cli_node'], 
-                                  capture_output=True, text=True)
+            result = subprocess.run(
+                ["pkill", "-f", "ur3e__cli_node"], capture_output=True, text=True
+            )
             if result.returncode == 0:
                 print(" Cleaned up previous CLI nodes")
         except Exception:
@@ -40,10 +40,10 @@ class UR3eCLI:
         """Initialize the robot connection"""
         try:
             print(" Initializing UR3e robot connection...")
-            
+
             # First, cleanup any old CLI nodes
             self.cleanup_old_cli_nodes()
-            
+
             if not rclpy.ok():
                 rclpy.init()
             self.robot = UR3eController("ur3e__cli_node")
@@ -70,7 +70,14 @@ class UR3eCLI:
         try:
             current_joints = self.robot.get_current_joint_positions()
             if current_joints:
-                joint_names = ["base", "shoulder", "elbow", "wrist1", "wrist2", "wrist3"]
+                joint_names = [
+                    "base",
+                    "shoulder",
+                    "elbow",
+                    "wrist1",
+                    "wrist2",
+                    "wrist3",
+                ]
                 print("Current joint positions:")
                 for name, angle in zip(joint_names, current_joints):
                     print(f"{name}: {angle:.2f}°")
@@ -115,15 +122,17 @@ class UR3eCLI:
         while True:
             try:
                 user_input = input("Joint angles: ").strip()
-                
+
                 if not user_input:
                     print(" No input provided")
                     continue
 
                 # Parse input - handle both comma-separated and space-separated
                 # Remove all spaces and split by comma, then split by spaces if no commas
-                if ',' in user_input:
-                    joint_values = [float(x.strip()) for x in user_input.split(',') if x.strip()]
+                if "," in user_input:
+                    joint_values = [
+                        float(x.strip()) for x in user_input.split(",") if x.strip()
+                    ]
                 else:
                     joint_values = [float(x) for x in user_input.split()]
 
