@@ -73,7 +73,7 @@ class UR3eCLI:
                 joint_names = ["base", "shoulder", "elbow", "wrist1", "wrist2", "wrist3"]
                 print("Current joint positions:")
                 for name, angle in zip(joint_names, current_joints):
-                    print(f"{name}: {round(angle, 1)}°")
+                    print(f"{name}: {angle:.2f}°")
             else:
                 print(" Could not get current position")
         except Exception as e:
@@ -104,9 +104,10 @@ class UR3eCLI:
         print("\n" + "=" * 50)
         print("Joint Control Mode - Enter joint positions")
         print("=" * 50)
-        print("Format: base shoulder elbow wrist1 wrist2 wrist3")
-        print("Example: 0 -90 20 -90 0 0")
-        print("Home position: 0 -90 0 -90 0 0")
+        print("Format: base, shoulder, elbow, wrist1, wrist2, wrist3")
+        print("Home position:   0, -90, 0, -90, 0, 0")
+        print("Valid example:   0, -60, -30, -90, 0, 0")
+        print("Invalid example: 0, -90, 160, -90, 0, 0")
         print("Safe ranges: ±180° for most joints")
         print("Press Ctrl+C to return to main menu")
         print("-" * 50)
@@ -119,8 +120,12 @@ class UR3eCLI:
                     print(" No input provided")
                     continue
 
-                # Parse input
-                joint_values = [float(x) for x in user_input.split()]
+                # Parse input - handle both comma-separated and space-separated
+                # Remove all spaces and split by comma, then split by spaces if no commas
+                if ',' in user_input:
+                    joint_values = [float(x.strip()) for x in user_input.split(',') if x.strip()]
+                else:
+                    joint_values = [float(x) for x in user_input.split()]
 
                 if len(joint_values) != 6:
                     print(" Please provide exactly 6 joint angles")
@@ -141,7 +146,7 @@ class UR3eCLI:
                     continue
 
                 print(
-                    f" Moving to joint positions: {[round(j, 1) for j in joint_values]}°"
+                    f" Moving to joint positions: {[round(j, 2) for j in joint_values]}°"
                 )
 
                 success = self.robot.move_to_joint_positions(joint_values)

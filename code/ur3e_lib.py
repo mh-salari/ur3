@@ -158,7 +158,7 @@ class UR3eController(Node):
             return False
 
         self.get_logger().info(
-            f"SAFE Planning: {[round(p, 1) for p in current_positions_deg]} → {[round(p, 1) for p in target_positions_deg]} degrees"
+            f"SAFE Planning: {[round(p, 2) for p in current_positions_deg]} → {[round(p, 2) for p in target_positions_deg]} degrees"
         )
 
         # Create MoveGroup goal for safe planning
