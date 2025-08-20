@@ -29,12 +29,10 @@ A complete ROS 2 + MoveIt 2 control system for Universal Robots UR3e with Python
 
 ## Features
 
+- ✅ Control the joints position UR3e with Pyhton!
 - ✅ Safe joint control with MoveIt planning
 - ✅ Collision avoidance and safety checks
-- ✅ Headless operation (no manual robot pendant interaction)
-- ✅ Flexible input formats: `0, -90, 0, -90, 0, 0` or `0 -90 0 -90 0 0`
-- ✅ 0.01° precision positioning
-- ✅ Real-time robot status monitoring
+
 
 ## Commands
 
