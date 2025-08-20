@@ -51,7 +51,7 @@ ur3 run driver launch_rviz:=true
 1. On the UR3 teach pendant, navigate to your saved `external_control.urp` program
 2. Select the program containing the **External Control** node  
 3. Press the **▶ Play** button
-4. The program should start and show "External Control" active
+4. The program should start without any errors and warnings. 
 
 **In Terminal A, you should now see:**
 ```
@@ -196,6 +196,7 @@ ros2 run tf2_tools view_frames
 - Pose is outside robot workspace → Try poses closer to robot base
 - Collision detected → Check for obstacles in RViz
 - Orientation unreachable → Simplify orientation or try different yaw values
+- Move the robot to it's Home and try again!
 
 **Debug joint positions:**
 Try very safe positions near home in the interactive CLI:
@@ -242,43 +243,3 @@ If inactive, restart UR driver (Terminal A) and make sure External Control is ru
 5. **Close RViz windows**
 
 ---
-
-## Session Script (Quick Reference)
-
-For experienced users, here's the condensed startup sequence:
-
-Terminal A: UR Driver (with calibration)
-```bash
-ur3 run driver launch_rviz:=true
-```
-
-Press Play on teach pendant, then Terminal B: MoveIt
-```bash
-ur3 run moveit launch_rviz:=true
-```
-
-Terminal C: Interactive CLI
-```bash
-cd ~/ur3/code/
-uv run cli.py
-```
-
-Choose option 2 to go home, then option 3 to control joints.
-
----
-
-## Performance Notes
-
-- **Planning time:** Typically 1-3 seconds for simple poses
-- **Execution time:** Depends on distance and velocity scaling
-- **Default speeds:** Conservative (20% velocity/acceleration) for safety
-- **Collision checking:** Always enabled - provides safe motion planning
-
----
-
-## Next Steps
-
-- Modify poses and parameters to explore robot workspace
-- Add custom waypoints or constraints to the Python script
-- Integrate with camera systems or sensors as needed
-- Consider creating launch files for automated startup
