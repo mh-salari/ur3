@@ -14,6 +14,7 @@ Then follow the interactive prompts to control the robot.
 import sys
 import readline  # Enable arrow keys and command history in input()
 import rclpy
+import subprocess
 from ur3e_lib import UR3eController
 
 
@@ -24,11 +25,27 @@ class UR3eCLI:
         self.robot = None
         self.running = True
 
+    def cleanup_old_cli_nodes(self):
+        """Kill any existing CLI nodes to prevent conflicts"""
+        try:
+            # Kill any existing ur3e_cli_node processes
+            result = subprocess.run(['pkill', '-f', 'ur3e__cli_node'], 
+                                  capture_output=True, text=True)
+            if result.returncode == 0:
+                print(" Cleaned up previous CLI nodes")
+        except Exception:
+            pass  # Ignore cleanup errors
+
     def initialize_robot(self):
         """Initialize the robot connection"""
         try:
             print(" Initializing UR3e robot connection...")
-            rclpy.init()
+            
+            # First, cleanup any old CLI nodes
+            self.cleanup_old_cli_nodes()
+            
+            if not rclpy.ok():
+                rclpy.init()
             self.robot = UR3eController("ur3e__cli_node")
             print(" Robot connected successfully!")
             return True

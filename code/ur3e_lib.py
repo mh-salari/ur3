@@ -193,27 +193,44 @@ class UR3eController(Node):
 
         # Send goal to MoveIt for safe planning
         self.get_logger().info("  Planning motion with collision avoidance...")
-        future = self.move_group_client.send_goal_async(goal)
-        rclpy.spin_until_future_complete(self, future)
+        try:
+            future = self.move_group_client.send_goal_async(goal)
+            rclpy.spin_until_future_complete(self, future, timeout_sec=10.0)
 
-        goal_handle = future.result()
-        if not goal_handle.accepted:
-            self.get_logger().error(" SAFETY: Joint movement goal REJECTED by MoveIt")
-            self.get_logger().error("   Possible reasons:")
-            self.get_logger().error("   • Position would cause self-collision")
-            self.get_logger().error("   • Joint limits exceeded")
-            self.get_logger().error("   • Unreachable configuration")
-            self.get_logger().error("   • Singularity detected")
+            if not future.done():
+                self.get_logger().error(" TIMEOUT: MoveIt goal submission timed out")
+                return False
+
+            goal_handle = future.result()
+            if not goal_handle or not goal_handle.accepted:
+                self.get_logger().error(" SAFETY: Joint movement goal REJECTED by MoveIt")
+                self.get_logger().error("   Possible reasons:")
+                self.get_logger().error("   • Position would cause self-collision")
+                self.get_logger().error("   • Joint limits exceeded")
+                self.get_logger().error("   • Unreachable configuration")
+                self.get_logger().error("   • Singularity detected")
+                return False
+
+            self.get_logger().info(" Safety check passed, executing motion...")
+
+            # Wait for execution result
+            result_future = goal_handle.get_result_async()
+            rclpy.spin_until_future_complete(self, result_future, timeout_sec=30.0)
+
+            if not result_future.done():
+                self.get_logger().error(" TIMEOUT: MoveIt execution timed out")
+                return False
+
+            result = result_future.result()
+            if not result or not result.result:
+                self.get_logger().error(" FAILED: No result received from MoveIt")
+                return False
+                
+            success = result.result.error_code.val == 1  # MoveItErrorCodes::SUCCESS
+        
+        except Exception as e:
+            self.get_logger().error(f" EXCEPTION during MoveIt operation: {e}")
             return False
-
-        self.get_logger().info(" Safety check passed, executing motion...")
-
-        # Wait for execution result
-        result_future = goal_handle.get_result_async()
-        rclpy.spin_until_future_complete(self, result_future)
-
-        result = result_future.result()
-        success = result.result.error_code.val == 1  # MoveItErrorCodes::SUCCESS
 
         if success:
             self.get_logger().info(" SAFE joint movement completed successfully!")
