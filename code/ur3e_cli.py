@@ -115,7 +115,7 @@ class UR3eCLI:
         print("Home position:   0, -90, 0, -90, 0, 0")
         print("Valid example:   0, -60, -30, -90, 0, 0")
         print("Invalid example: 0, -90, 160, -90, 0, 0")
-        print("Safe ranges: ±180° for most joints")
+        print("Safe ranges: ±360° for most joints")
         print("Press Ctrl+C to return to main menu")
         print("-" * 50)
 
