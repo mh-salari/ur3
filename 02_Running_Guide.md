@@ -29,8 +29,8 @@ Before starting, ensure you have completed:
 
 ### Step 1: Start UR ROS 2 Driver (Terminal A)
 
+Launch UR driver with calibration and RViz:
 ```bash
-# Launch UR driver with calibration
 ur3 run driver launch_rviz:=true
 ```
 
@@ -61,8 +61,8 @@ ur3 run driver launch_rviz:=true
 
 ### Step 3: Start MoveIt 2 (Terminal B)
 
+Launch MoveIt 2 with UR3 configuration and RViz:
 ```bash
-# Launch MoveIt 2 with UR3 configuration
 ur3 run moveit launch_rviz:=true
 ```
 
@@ -102,11 +102,13 @@ io_and_status_controller[ur_controllers/GPIOController] active
 
 ### Step 5: Run Interactive Python CLI (Terminal D)
 
+Navigate to the Python CLI directory:
 ```bash
-# Navigate to the Python CLI directory
-cd code/
+cd ~/ur3/code/
+```
 
-# Start the interactive CLI
+Start the interactive CLI:
+```bash
 uv run ur3e_cli.py
 ```
 
@@ -135,23 +137,30 @@ Choose option (1-4):
 ## Interactive CLI Usage
 
 ### Safe test joint positions for UR3:
-```bash
-# In the interactive CLI, try these joint positions:
+In the interactive CLI, choose Option 3: Move to joint positions (degrees)
 
-# Option 3: Move to joint positions (degrees)
-# Home position
+Home position:
+```
 0 -90 0 -90 0 0
+```
 
-# Safe raised position
+Safe raised position:
+```
 0 -60 -30 -90 0 0
+```
 
-# Left side position
+Left side position:
+```
 90 -90 0 -90 0 0
+```
 
-# Right side position
+Right side position:
+```
 -90 -90 0 -90 0 0
+```
 
-# Slightly forward
+Slightly forward:
+```
 0 -45 -45 -90 0 0
 ```
 
@@ -160,13 +169,14 @@ Choose option (1-4):
 
 ### Debugging commands:
 ```bash
-# Monitor joint states
 ros2 topic echo /joint_states --once
+```
 
-# Monitor planned trajectories
+```bash
 ros2 topic echo /scaled_joint_trajectory_controller/joint_trajectory --once
+```
 
-# Check TF transforms
+```bash
 ros2 run tf2_tools view_frames
 ```
 
@@ -187,36 +197,33 @@ ros2 run tf2_tools view_frames
 - Collision detected → Check for obstacles in RViz
 - Orientation unreachable → Simplify orientation or try different yaw values
 
-**Debug poses:**
-```bash
-# Very safe pose near base
-uv run goto_pose.py --x 0.2 --y 0.0 --z 0.15
-
-# Check workspace limits in RViz motion planning panel
+**Debug joint positions:**
+Try very safe positions near home in the interactive CLI:
+```
+0 -75 -15 -90 0 0
 ```
 
 ### Problem: "moveit_py import error"
 **Solution:**
 ```bash
-# Check if moveit_py is installed
 ros2 pkg list | grep moveit-py
+```
 
-# If missing, install:
+```bash
 sudo apt install ros-jazzy-moveit-py
+```
 
-# Verify installation
+```bash
 python3 -c "from moveit.planning import MoveItPy; print('OK')"
 ```
 
 ### Problem: Controllers not active
 **Solution:**
 ```bash
-# Check controller status
 ros2 control list_controllers
-
-# If inactive, restart UR driver (Terminal A)
-# Make sure External Control is running on teach pendant
 ```
+
+If inactive, restart UR driver (Terminal A) and make sure External Control is running on teach pendant.
 
 ### Problem: RViz shows no robot model
 **Solution:**
@@ -240,20 +247,23 @@ ros2 control list_controllers
 
 For experienced users, here's the condensed startup sequence:
 
+Terminal A: UR Driver (with calibration)
 ```bash
-# Terminal A: UR Driver (with calibration)
 ur3 run driver launch_rviz:=true
-
-# → Press Play on teach pendant
-
-# Terminal B: MoveIt
-ur3 run moveit launch_rviz:=true
-
-# Terminal C: Interactive CLI
-cd code/
-uv run ur3e_cli.py
-# Choose option 2 to go home, then option 3 to control joints
 ```
+
+Press Play on teach pendant, then Terminal B: MoveIt
+```bash
+ur3 run moveit launch_rviz:=true
+```
+
+Terminal C: Interactive CLI
+```bash
+cd ~/ur3/code/
+uv run ur3e_cli.py
+```
+
+Choose option 2 to go home, then option 3 to control joints.
 
 ---
 
