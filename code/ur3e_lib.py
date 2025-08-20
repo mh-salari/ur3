@@ -6,10 +6,19 @@ A clean library for controlling UR3e robot with joint positions (degrees).
 No Cartesian control to avoid complications.
 
 Usage:
-    from ur3e__lib import UR3eController
+    from ur3e_lib import UR3eController
+    from ur3_types import JointPositions
 
     robot = UR3eController()
-    robot.move_to_joint_positions([0, -90, 20, -90, 0, 0])
+
+    # Using JointPositions type
+    joints = JointPositions([0, -90, 20, -90, 0, 0])
+    robot.move_to_joint_positions(joints)
+
+    # Or modify individual joints
+    joints.base = 45
+    robot.move_to_joint_positions(joints)
+
     robot.go_home()
 """
 
@@ -27,6 +36,7 @@ from moveit_msgs.msg import (
 )
 import math
 import time
+from ur3_types import JointPositions
 
 
 class UR3eController(Node):
@@ -69,7 +79,7 @@ class UR3eController(Node):
         ]
 
         # Home position in degrees
-        self.home_position = [0.0, -90.0, 0.0, -90.0, 0.0, 0.0]
+        self.home_position = JointPositions([0.0, -90.0, 0.0, -90.0, 0.0, 0.0])
 
         # Initialize connection
         self._initialize_connection()
@@ -116,7 +126,7 @@ class UR3eController(Node):
         Get current joint positions in degrees
 
         Returns:
-            list: Joint positions [base, shoulder, elbow, wrist1, wrist2, wrist3] in degrees
+            JointPositions: Joint positions object with individual joint values in degrees
             None: If joint states not available
         """
         if self.current_joint_state is None:
@@ -131,23 +141,25 @@ class UR3eController(Node):
                 self.get_logger().error(f"Joint {joint_name} not found")
                 return None
 
-        return self.radians_to_degrees(ur_positions)
+        degrees_list = self.radians_to_degrees(ur_positions)
+        return JointPositions(degrees_list)
 
-    def move_to_joint_positions(self, target_positions_deg, duration_sec=5.0):
+    def move_to_joint_positions(self, target_positions, duration_sec=5.0):
         """
         SAFE Move robot to target joint positions using MoveIt planning with collision checking
 
         Args:
-            target_positions_deg (list): 6 joint positions in degrees
-                                       [base, shoulder, elbow, wrist1, wrist2, wrist3]
+            target_positions (JointPositions): Joint positions in degrees
             duration_sec (float): Time to complete movement
 
         Returns:
             bool: True if successful, False otherwise
         """
-        if len(target_positions_deg) != 6:
-            self.get_logger().error("Must provide exactly 6 joint angles")
+        if not isinstance(target_positions, JointPositions):
+            self.get_logger().error("target_positions must be a JointPositions object")
             return False
+
+        target_positions_deg = target_positions.to_list()
 
         # Convert to radians
         target_positions_rad = self.degrees_to_radians(target_positions_deg)
@@ -157,8 +169,9 @@ class UR3eController(Node):
             self.get_logger().error("Could not get current joint positions")
             return False
 
+        current_positions_list = current_positions_deg.to_list()
         self.get_logger().info(
-            f"SAFE Planning: {[round(p, 2) for p in current_positions_deg]} → {[round(p, 2) for p in target_positions_deg]} degrees"
+            f"SAFE Planning: {[round(p, 2) for p in current_positions_list]} → {[round(p, 2) for p in target_positions_deg]} degrees"
         )
 
         # Create MoveGroup goal for safe planning

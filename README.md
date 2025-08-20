@@ -22,6 +22,9 @@ A complete ROS 2 + MoveIt 2 control system for Universal Robots UR3e with Python
 - **`code/`** - Python control interface
   - `ur3e_cli.py` - Interactive command-line interface
   - `ur3e_lib.py` - Robot control library
+  - `ur3_types.py` - Joint position type definitions
+  - `cli.py` - Updated CLI with type support
+  - `demo.py` - Demo routine using typed joints
 - **`assets/`** - Images and resources
 
 ## Features
@@ -38,7 +41,7 @@ A complete ROS 2 + MoveIt 2 control system for Universal Robots UR3e with Python
 ```bash
 ur3 run driver    # Start UR3e driver (headless mode)
 ur3 run moveit    # Start MoveIt planning server
-uv run ur3e_cli.py # Launch interactive control CLI
+uv run cli.py     # Launch interactive control CLI
 ```
 
 ---

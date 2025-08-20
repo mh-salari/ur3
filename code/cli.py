@@ -15,6 +15,7 @@ import rclpy
 import subprocess
 import readline  # Enable arrow keys and command history in input()
 from ur3e_lib import UR3eController
+from ur3_types import JointPositions
 
 
 class UR3eCLI:
@@ -70,17 +71,13 @@ class UR3eCLI:
         try:
             current_joints = self.robot.get_current_joint_positions()
             if current_joints:
-                joint_names = [
-                    "base",
-                    "shoulder",
-                    "elbow",
-                    "wrist1",
-                    "wrist2",
-                    "wrist3",
-                ]
                 print("Current joint positions:")
-                for name, angle in zip(joint_names, current_joints):
-                    print(f"{name}: {angle:.2f}°")
+                print(f"base: {current_joints.base:.2f}°")
+                print(f"shoulder: {current_joints.shoulder:.2f}°")
+                print(f"elbow: {current_joints.elbow:.2f}°")
+                print(f"wrist1: {current_joints.wrist1:.2f}°")
+                print(f"wrist2: {current_joints.wrist2:.2f}°")
+                print(f"wrist3: {current_joints.wrist3:.2f}°")
             else:
                 print(" Could not get current position")
         except Exception as e:
@@ -158,7 +155,8 @@ class UR3eCLI:
                     f" Moving to joint positions: {[round(j, 2) for j in joint_values]}°"
                 )
 
-                success = self.robot.move_to_joint_positions(joint_values)
+                joints = JointPositions(joint_values)
+                success = self.robot.move_to_joint_positions(joints)
                 if success:
                     print(" Movement completed!")
                 else:

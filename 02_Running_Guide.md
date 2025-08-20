@@ -109,7 +109,7 @@ cd ~/ur3/code/
 
 Start the interactive CLI:
 ```bash
-uv run ur3e_cli.py
+uv run cli.py
 ```
 
 **Expected output:**
@@ -260,7 +260,7 @@ ur3 run moveit launch_rviz:=true
 Terminal C: Interactive CLI
 ```bash
 cd ~/ur3/code/
-uv run ur3e_cli.py
+uv run cli.py
 ```
 
 Choose option 2 to go home, then option 3 to control joints.
