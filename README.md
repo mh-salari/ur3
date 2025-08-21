@@ -20,26 +20,39 @@ A complete ROS 2 + MoveIt 2 control system for Universal Robots UR3e with Python
 - **`02_Running_Guide.md`** - Step-by-step usage guide  
 - **`setup_ur3_functions.sh`** - Bash function configuration
 - **`code/`** - Python control interface
-  - `ur3e_cli.py` - Interactive command-line interface
-  - `ur3e_lib.py` - Robot control library
-  - `ur3_types.py` - Joint position type definitions
-  - `cli.py` - Updated CLI with type support
+  - `cli.py` - Interactive command-line interface with readline support
+  - `ur3e_lib.py` - Robot control library with collision detection
+  - `ur3_types.py` - Joint position type definitions with validation
+  - `robot_setup.py` - Workspace collision object configuration
   - `demo.py` - Demo routine using typed joints
+  - `face_tracking_demo.py` - Robot follows detected faces with camera
+  - `color_tracking_demo.py` - Robot tracks colored objects in real-time
 - **`assets/`** - Images and resources
 
 ## Features
 
-- ✅ Control the joints position UR3e with Pyhton!
+- ✅ Control the joints position UR3e with Python!
 - ✅ Safe joint control with MoveIt planning
 - ✅ Collision avoidance and safety checks
+- ✅ Interactive CLI with readline support
+- ✅ Computer vision demos with OpenCV
+- ✅ Real-time face tracking and following
+- ✅ Color-based object tracking (red objects)
+- ✅ Type-safe joint position handling
 
 
 ## Commands
 
 ```bash
+# Core system
 ur3 run driver    # Start UR3e driver (headless mode)
 ur3 run moveit    # Start MoveIt planning server
 uv run cli.py     # Launch interactive control CLI
+
+# Computer vision demos
+uv run face_tracking_demo.py    # Face tracking demo
+uv run color_tracking_demo.py   # Red object tracking demo
+uv run demo.py                  # Basic movement demonstration
 ```
 
 ---

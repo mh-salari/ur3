@@ -107,9 +107,21 @@ Navigate to the Python CLI directory:
 cd ~/ur3/code/
 ```
 
-Start the interactive CLI:
+#### Option A: Interactive CLI
 ```bash
 uv run cli.py
+```
+
+#### Option B: Computer Vision Demos
+```bash
+# Face tracking demo (requires webcam)
+uv run face_tracking_demo.py
+
+# Color tracking demo (tracks red objects, requires webcam)  
+uv run color_tracking_demo.py
+
+# Basic movement demonstration
+uv run demo.py
 ```
 
 **Expected output:**
@@ -131,6 +143,31 @@ uv run cli.py
 Note: Only joint control available for safety
 Choose option (1-4):
 ```
+
+---
+
+## Usage Options
+
+### Computer Vision Demo Requirements
+
+For face and color tracking demos:
+- **Webcam**: Connected USB camera or built-in camera
+- **OpenCV**: Installed via `uv sync` (automatic dependency)
+- **Good lighting**: Essential for reliable face/color detection
+- **Safety space**: Ensure robot has clear movement area
+
+#### Face Tracking Demo
+- Detects and follows human faces in real-time
+- Robot base rotates to follow horizontal face movement
+- Shoulder and elbow joints adjust for vertical tracking
+- Press 'h' to return robot to home position
+- Press 'q' to quit
+
+#### Color Tracking Demo  
+- Tracks red objects in camera view
+- Adjustable HSV color thresholds for different lighting
+- Similar movement patterns to face tracking
+- Shows real-time color filtering and object detection
 
 ---
 

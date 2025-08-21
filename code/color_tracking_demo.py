@@ -3,20 +3,23 @@
 UR3e Simple Color Tracking Demo
 Tracks the color red using webcam and moves robot to follow the red object position.
 """
- 
-import rclpy
+
+import math
+import threading
+import time
+
 import cv2
 import numpy as np
-import time
-import threading
-import math
-from rclpy.node import Node
-from rclpy.action import ActionClient
-from sensor_msgs.msg import JointState
+import rclpy
 from control_msgs.action import FollowJointTrajectory
+from rclpy.action import ActionClient
+from rclpy.node import Node
+from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
 from ur3_types import JointPositions as Jpos
- 
+
+
 class SimpleUR3eController(Node):
     def __init__(self, node_name="simple_color_tracking"):
         super().__init__(node_name)
@@ -25,9 +28,7 @@ class SimpleUR3eController(Node):
             FollowJointTrajectory,
             "/scaled_joint_trajectory_controller/follow_joint_trajectory",
         )
-        self.joint_state_sub = self.create_subscription(
-            JointState, "joint_states", self._joint_state_callback, 10
-        )
+        self.joint_state_sub = self.create_subscription(JointState, "joint_states", self._joint_state_callback, 10)
         self.current_joint_state = None
         self.joint_state_received = False
         self.ur_joint_names = [
@@ -45,11 +46,11 @@ class SimpleUR3eController(Node):
         while not self.joint_state_received:
             rclpy.spin_once(self, timeout_sec=0.1)
         self.get_logger().info("Simple controller ready!")
- 
+
     def _joint_state_callback(self, msg):
         self.current_joint_state = msg
         self.joint_state_received = True
- 
+
     def move_to_joint_positions(self, joint_positions, duration=2.0):
         if not self.joint_state_received:
             self.get_logger().warn("No joint state received yet")
@@ -68,7 +69,8 @@ class SimpleUR3eController(Node):
         if future.result() is not None:
             return future.result().accepted
         return False
- 
+
+
 class ColorTrackingDemo:
     def __init__(self):
         self.robot = None
@@ -85,7 +87,7 @@ class ColorTrackingDemo:
         self.max_elbow_angle = 40
         self.home_position = Jpos([0, -90, 0, -90, 0, 0])
         self.current_position = self.home_position.copy()
- 
+
     def initialize_robot(self):
         rclpy.init()
         self.robot = SimpleUR3eController("color_tracking_demo")
@@ -93,7 +95,7 @@ class ColorTrackingDemo:
         self.robot.move_to_joint_positions(self.home_position)
         self.current_position = self.home_position.copy()
         print("Robot initialized and ready for color tracking")
- 
+
     def initialize_camera(self):
         try:
             self.cap = cv2.VideoCapture(0)
@@ -106,7 +108,7 @@ class ColorTrackingDemo:
         except Exception as e:
             print(f"Error initializing camera: {e}")
             return False
- 
+
     def detect_red_object(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         lower_red1 = np.array([0, 120, 70])
@@ -129,7 +131,7 @@ class ColorTrackingDemo:
                 cv2.circle(frame, (center_x, center_y), 5, (0, 255, 0), -1)
                 return (center_x, center_y)
         return None
- 
+
     def calculate_robot_position(self, object_center):
         if object_center is None:
             return self.current_position
@@ -144,7 +146,7 @@ class ColorTrackingDemo:
         elbow_angle = self.elbow_center + (normalized_y * self.max_elbow_angle)
         new_position.elbow = max(-60, min(60, elbow_angle))
         return new_position
- 
+
     def robot_control_loop(self):
         while self.running:
             if self.object_center is not None:
@@ -156,12 +158,14 @@ class ColorTrackingDemo:
                     except Exception as e:
                         print(f"Robot movement error: {e}")
             time.sleep(0.2)
- 
+
     def position_changed(self, new_pos, old_pos, threshold=2.0):
-        return (abs(new_pos.base - old_pos.base) > threshold or 
-                abs(new_pos.shoulder - old_pos.shoulder) > threshold or
-                abs(new_pos.elbow - old_pos.elbow) > threshold)
- 
+        return (
+            abs(new_pos.base - old_pos.base) > threshold
+            or abs(new_pos.shoulder - old_pos.shoulder) > threshold
+            or abs(new_pos.elbow - old_pos.elbow) > threshold
+        )
+
     def run(self):
         try:
             self.initialize_robot()
@@ -181,10 +185,20 @@ class ColorTrackingDemo:
                 frame = cv2.flip(frame, 1)
                 object_center = self.detect_red_object(frame)
                 self.object_center = object_center
-                cv2.line(frame, (self.frame_width//2 - 20, self.frame_height//2), 
-                        (self.frame_width//2 + 20, self.frame_height//2), (0, 255, 255), 2)
-                cv2.line(frame, (self.frame_width//2, self.frame_height//2 - 20), 
-                        (self.frame_width//2, self.frame_height//2 + 20), (0, 255, 255), 2)
+                cv2.line(
+                    frame,
+                    (self.frame_width // 2 - 20, self.frame_height // 2),
+                    (self.frame_width // 2 + 20, self.frame_height // 2),
+                    (0, 255, 255),
+                    2,
+                )
+                cv2.line(
+                    frame,
+                    (self.frame_width // 2, self.frame_height // 2 - 20),
+                    (self.frame_width // 2, self.frame_height // 2 + 20),
+                    (0, 255, 255),
+                    2,
+                )
                 if object_center:
                     status_text = f"Red: ({object_center[0]}, {object_center[1]})"
                     norm_x = (object_center[0] - self.frame_width / 2) / (self.frame_width / 2)
@@ -195,11 +209,11 @@ class ColorTrackingDemo:
                 else:
                     status_text = "No red object detected"
                     cv2.putText(frame, status_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                cv2.imshow('Color Tracking Demo', frame)
+                cv2.imshow("Color Tracking Demo", frame)
                 key = cv2.waitKey(1) & 0xFF
-                if key == ord('q'):
+                if key == ord("q"):
                     break
-                elif key == ord('h'):
+                if key == ord("h"):
                     print("Returning robot to home position...")
                     self.robot.move_to_joint_positions(self.home_position)
                     self.current_position = self.home_position.copy()
@@ -209,7 +223,7 @@ class ColorTrackingDemo:
             print(f"Demo error: {e}")
         finally:
             self.cleanup()
- 
+
     def cleanup(self):
         print("Cleaning up...")
         self.running = False
@@ -225,11 +239,12 @@ class ColorTrackingDemo:
                 pass
         rclpy.shutdown()
         print("Demo finished!")
- 
+
+
 def main():
     demo = ColorTrackingDemo()
     demo.run()
- 
+
+
 if __name__ == "__main__":
     main()
- 

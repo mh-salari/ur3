@@ -21,9 +21,7 @@ class JointPositions:
             # Initialize from list: JointPositions([0,0,0,0,0,0])
             if len(joints) != 6:
                 raise ValueError("Joint list must have exactly 6 values")
-            self._set_joint_values(
-                joints[0], joints[1], joints[2], joints[3], joints[4], joints[5]
-            )
+            self._set_joint_values(joints[0], joints[1], joints[2], joints[3], joints[4], joints[5])
         else:
             # Initialize with individual parameters
             self._set_joint_values(base, shoulder, elbow, wrist1, wrist2, wrist3)
@@ -31,9 +29,7 @@ class JointPositions:
     def _validate_angle(self, angle, joint_name):
         """Validate that angle is within ±360 degrees"""
         if not isinstance(angle, (int, float)):
-            raise TypeError(
-                f"{joint_name} must be a number, got {type(angle).__name__}"
-            )
+            raise TypeError(f"{joint_name} must be a number, got {type(angle).__name__}")
         if abs(angle) > 360:
             raise ValueError(f"{joint_name} angle {angle}° exceeds ±360° limit")
         return float(angle)

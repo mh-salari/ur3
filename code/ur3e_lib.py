@@ -22,27 +22,29 @@ Usage:
     robot.go_home()
 """
 
+import math
 import sys
+import time
+
 import rclpy
-from rclpy.node import Node
-from rclpy.action import ActionClient
-from sensor_msgs.msg import JointState
 from control_msgs.action import FollowJointTrajectory
+from geometry_msgs.msg import Point, Pose, Quaternion
 from moveit_msgs.action import MoveGroup
-from moveit_msgs.srv import GetPlanningScene, ApplyPlanningScene
 from moveit_msgs.msg import (
-    MotionPlanRequest,
-    PlanningOptions,
+    AttachedCollisionObject,
+    CollisionObject,
     Constraints,
     JointConstraint,
-    CollisionObject,
-    AttachedCollisionObject,
+    MotionPlanRequest,
+    PlanningOptions,
     PlanningScene,
 )
+from moveit_msgs.srv import ApplyPlanningScene, GetPlanningScene
+from rclpy.action import ActionClient
+from rclpy.node import Node
+from sensor_msgs.msg import JointState
 from shape_msgs.msg import SolidPrimitive
-from geometry_msgs.msg import Pose, Point, Quaternion
-import math
-import time
+
 from ur3_types import JointPositions
 
 
@@ -65,17 +67,15 @@ class UR3eController(Node):
 
         # Create action client for MoveGroup (safe planning)
         self.move_group_client = ActionClient(self, MoveGroup, "/move_action")
-        
+
         # Create service client for getting planning scene (real robot state)
         self.get_planning_scene_client = self.create_client(GetPlanningScene, "/get_planning_scene")
-        
+
         # Create service client for applying planning scene changes (collision objects)
         self.apply_planning_scene_client = self.create_client(ApplyPlanningScene, "/apply_planning_scene")
 
         # Subscribe to joint states
-        self.joint_state_sub = self.create_subscription(
-            JointState, "joint_states", self._joint_state_callback, 10
-        )
+        self.joint_state_sub = self.create_subscription(JointState, "joint_states", self._joint_state_callback, 10)
 
         # Robot state
         self.current_joint_state = None
@@ -133,7 +133,6 @@ class UR3eController(Node):
 
     def _goal_feedback_callback(self, feedback_msg):
         """Callback for trajectory execution feedback"""
-        pass
 
     def degrees_to_radians(self, degrees_list):
         """Convert list of degrees to radians"""
@@ -150,6 +149,7 @@ class UR3eController(Node):
         Returns:
             JointPositions: Joint positions object with individual joint values in degrees
             None: If joint states not available
+
         """
         if self.current_joint_state is None:
             return None
@@ -176,6 +176,7 @@ class UR3eController(Node):
 
         Returns:
             bool: True if successful, False otherwise
+
         """
         if not isinstance(target_positions, JointPositions):
             self.get_logger().error("target_positions must be a JointPositions object")
@@ -238,9 +239,7 @@ class UR3eController(Node):
 
             goal_handle = future.result()
             if not goal_handle or not goal_handle.accepted:
-                self.get_logger().error(
-                    " SAFETY: Joint movement goal REJECTED by MoveIt"
-                )
+                self.get_logger().error(" SAFETY: Joint movement goal REJECTED by MoveIt")
                 self.get_logger().error("   Possible reasons:")
                 self.get_logger().error("   • Position would cause self-collision")
                 self.get_logger().error("   • Joint limits exceeded")
@@ -273,27 +272,19 @@ class UR3eController(Node):
             self.get_logger().info("   SAFE joint movement completed successfully!")
         else:
             error_code = result.result.error_code.val
-            self.get_logger().error(
-                f" SAFE movement failed with MoveIt error code: {error_code}"
-            )
+            self.get_logger().error(f" SAFE movement failed with MoveIt error code: {error_code}")
 
             # Provide helpful error messages
             if error_code == -4:
-                self.get_logger().error(
-                    " CONTROL_FAILED: Robot hardware communication failed!"
-                )
-                self.get_logger().error(
-                    "   • Check if robot is powered on and connected"
-                )
+                self.get_logger().error(" CONTROL_FAILED: Robot hardware communication failed!")
+                self.get_logger().error("   • Check if robot is powered on and connected")
                 self.get_logger().error("   • Verify network connection to robot")
                 self.get_logger().error("   • Ensure robot is not in protective stop")
                 self.get_logger().error("   • Check if UR driver is running properly")
                 self.get_logger().fatal("   CRITICAL ERROR: Exiting due to robot communication failure")
                 sys.exit(1)
             elif error_code == -21:
-                self.get_logger().error(
-                    " COLLISION: Target position would cause robot to hit itself!"
-                )
+                self.get_logger().error(" COLLISION: Target position would cause robot to hit itself!")
             elif error_code == -22:
                 self.get_logger().error(" COLLISION: Current position has collision!")
             elif error_code == -11:
@@ -316,6 +307,7 @@ class UR3eController(Node):
 
         Returns:
             bool: True if successful, False otherwise
+
         """
         self.get_logger().info("Moving to home position...")
         return self.move_to_joint_positions(self.home_position, duration_sec)
@@ -323,31 +315,32 @@ class UR3eController(Node):
     def add_box_collision_object(self, name, pose, dimensions, frame_id="base_link"):
         """
         Add a box collision object to the planning scene
-        
+
         Args:
             name (str): Unique name for the collision object
             pose (list): [x, y, z, qx, qy, qz, qw] position and orientation
             dimensions (list): [length, width, height] in meters
             frame_id (str): Reference frame (default: "base_link")
-        
+
         Returns:
             bool: True if successfully added, False otherwise
+
         """
         if not self.apply_planning_scene_client.service_is_ready():
             self.get_logger().error("Planning scene service not available")
             return False
-        
+
         # Create collision object
         collision_object = CollisionObject()
         collision_object.header.frame_id = frame_id
         collision_object.header.stamp = self.get_clock().now().to_msg()
         collision_object.id = name
-        
+
         # Create box primitive
         box = SolidPrimitive()
         box.type = SolidPrimitive.BOX
         box.dimensions = dimensions
-        
+
         # Set pose
         pose_msg = Pose()
         pose_msg.position = Point(x=pose[0], y=pose[1], z=pose[2])
@@ -355,36 +348,35 @@ class UR3eController(Node):
             pose_msg.orientation = Quaternion(x=pose[3], y=pose[4], z=pose[5], w=pose[6])
         else:  # use identity quaternion
             pose_msg.orientation = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        
+
         collision_object.primitives = [box]
         collision_object.primitive_poses = [pose_msg]
         collision_object.operation = CollisionObject.ADD
-        
+
         # Create planning scene diff
         planning_scene_diff = PlanningScene()
         planning_scene_diff.is_diff = True
         planning_scene_diff.world.collision_objects = [collision_object]
-        
+
         # Apply the planning scene
         try:
             request = ApplyPlanningScene.Request()
             request.scene = planning_scene_diff
-            
+
             future = self.apply_planning_scene_client.call_async(request)
-            
+
             # Use polling instead of spin_until_future_complete to avoid node context corruption
             timeout_time = time.time() + 5.0
             while not future.done() and time.time() < timeout_time:
                 rclpy.spin_once(self, timeout_sec=0.1)
                 time.sleep(0.01)
-            
+
             if future.done() and future.result().success:
                 self.get_logger().info(f"Added collision object '{name}' to planning scene")
                 return True
-            else:
-                self.get_logger().error(f"Failed to add collision object '{name}'")
-                return False
-                
+            self.get_logger().error(f"Failed to add collision object '{name}'")
+            return False
+
         except Exception as e:
             self.get_logger().error(f"Exception adding collision object '{name}': {e}")
             return False
@@ -392,76 +384,78 @@ class UR3eController(Node):
     def attach_tool_collision_object(self, name, dimensions, link_name="tool0", pose_offset=None):
         """
         Attach a tool collision object to the robot end-effector
-        
+
         Args:
             name (str): Unique name for the attached tool
             dimensions (list): [length, width, height] in meters
             link_name (str): Link to attach to (default: "tool0")
             pose_offset (list): Optional [x, y, z, qx, qy, qz, qw] offset from link
-        
+
         Returns:
             bool: True if successfully attached, False otherwise
+
         """
         if not self.apply_planning_scene_client.service_is_ready():
             self.get_logger().error("Planning scene service not available")
             return False
-        
+
         # Create attached collision object
         attached_object = AttachedCollisionObject()
         attached_object.link_name = link_name
         attached_object.object.header.frame_id = link_name
         attached_object.object.header.stamp = self.get_clock().now().to_msg()
         attached_object.object.id = name
-        
+
         # Create box primitive for tool
         box = SolidPrimitive()
         box.type = SolidPrimitive.BOX
         box.dimensions = dimensions
-        
+
         # Set pose (offset from link)
         pose_msg = Pose()
         if pose_offset and len(pose_offset) >= 3:
             pose_msg.position = Point(x=pose_offset[0], y=pose_offset[1], z=pose_offset[2])
             if len(pose_offset) == 7:
-                pose_msg.orientation = Quaternion(x=pose_offset[3], y=pose_offset[4], z=pose_offset[5], w=pose_offset[6])
+                pose_msg.orientation = Quaternion(
+                    x=pose_offset[3], y=pose_offset[4], z=pose_offset[5], w=pose_offset[6]
+                )
             else:
                 pose_msg.orientation = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
         else:
             pose_msg.position = Point(x=0.0, y=0.0, z=0.0)
             pose_msg.orientation = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-        
+
         attached_object.object.primitives = [box]
         attached_object.object.primitive_poses = [pose_msg]
         attached_object.object.operation = CollisionObject.ADD
-        
+
         # Set touch links (links that can touch the attached object)
         attached_object.touch_links = [link_name, "wrist_3_link", "wrist_2_link"]
-        
+
         # Create planning scene diff
         planning_scene_diff = PlanningScene()
         planning_scene_diff.is_diff = True
         planning_scene_diff.robot_state.attached_collision_objects = [attached_object]
-        
+
         # Apply the planning scene
         try:
             request = ApplyPlanningScene.Request()
             request.scene = planning_scene_diff
-            
+
             future = self.apply_planning_scene_client.call_async(request)
-            
+
             # Use polling instead of spin_until_future_complete to avoid node context corruption
             timeout_time = time.time() + 5.0
             while not future.done() and time.time() < timeout_time:
                 rclpy.spin_once(self, timeout_sec=0.1)
                 time.sleep(0.01)
-            
+
             if future.done() and future.result().success:
                 self.get_logger().info(f"Attached tool '{name}' to {link_name}")
                 return True
-            else:
-                self.get_logger().error(f"Failed to attach tool '{name}'")
-                return False
-                
+            self.get_logger().error(f"Failed to attach tool '{name}'")
+            return False
+
         except Exception as e:
             self.get_logger().error(f"Exception attaching tool '{name}': {e}")
             return False
@@ -469,47 +463,47 @@ class UR3eController(Node):
     def remove_collision_object(self, name):
         """
         Remove a collision object from the planning scene
-        
+
         Args:
             name (str): Name of the collision object to remove
-        
+
         Returns:
             bool: True if successfully removed, False otherwise
+
         """
         if not self.apply_planning_scene_client.service_is_ready():
             self.get_logger().error("Planning scene service not available")
             return False
-        
+
         # Create collision object for removal
         collision_object = CollisionObject()
         collision_object.id = name
         collision_object.operation = CollisionObject.REMOVE
-        
+
         # Create planning scene diff
         planning_scene_diff = PlanningScene()
         planning_scene_diff.is_diff = True
         planning_scene_diff.world.collision_objects = [collision_object]
-        
+
         # Apply the planning scene
         try:
             request = ApplyPlanningScene.Request()
             request.scene = planning_scene_diff
-            
+
             future = self.apply_planning_scene_client.call_async(request)
-            
+
             # Use polling instead of spin_until_future_complete to avoid node context corruption
             timeout_time = time.time() + 5.0
             while not future.done() and time.time() < timeout_time:
                 rclpy.spin_once(self, timeout_sec=0.1)
                 time.sleep(0.01)
-            
+
             if future.done() and future.result().success:
                 self.get_logger().info(f"Removed collision object '{name}'")
                 return True
-            else:
-                self.get_logger().error(f"Failed to remove collision object '{name}'")
-                return False
-                
+            self.get_logger().error(f"Failed to remove collision object '{name}'")
+            return False
+
         except Exception as e:
             self.get_logger().error(f"Exception removing collision object '{name}': {e}")
             return False

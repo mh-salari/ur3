@@ -11,12 +11,14 @@ Usage:
 Then follow the interactive prompts to control the robot.
 """
 
-import rclpy
+import readline  # noqa: F401
 import subprocess
-import readline  # Enable arrow keys and command history in input()
-from ur3e_lib import UR3eController
-from ur3_types import JointPositions
+
+import rclpy
+
 from robot_setup import setup_robot_workspace
+from ur3_types import JointPositions
+from ur3e_lib import UR3eController
 
 
 class UR3eCLI:
@@ -30,9 +32,7 @@ class UR3eCLI:
         """Kill any existing CLI nodes to prevent conflicts"""
         try:
             # Kill any existing ur3e_cli_node processes
-            result = subprocess.run(
-                ["pkill", "-f", "ur3e__cli_node"], capture_output=True, text=True
-            )
+            result = subprocess.run(["pkill", "-f", "ur3e__cli_node"], capture_output=True, text=True, check=False)
             if result.returncode == 0:
                 print(" Cleaned up previous CLI nodes")
         except Exception:
@@ -50,12 +50,12 @@ class UR3eCLI:
                 rclpy.init()
             self.robot = UR3eController("ur3e__cli_node")
             print(" Robot connected successfully!")
-            
+
             # Setup robot workspace with collision objects
             print(" Setting up robot workspace...")
             self.workspace = setup_robot_workspace(self.robot)
             print(" Workspace collision objects loaded!")
-            
+
             return True
         except Exception as e:
             print(f" Failed to connect to robot: {e}")
@@ -134,9 +134,7 @@ class UR3eCLI:
                 # Parse input - handle both comma-separated and space-separated
                 # Remove all spaces and split by comma, then split by spaces if no commas
                 if "," in user_input:
-                    joint_values = [
-                        float(x.strip()) for x in user_input.split(",") if x.strip()
-                    ]
+                    joint_values = [float(x.strip()) for x in user_input.split(",") if x.strip()]
                 else:
                     joint_values = [float(x) for x in user_input.split()]
 
@@ -158,9 +156,7 @@ class UR3eCLI:
                 if not valid:
                     continue
 
-                print(
-                    f" Moving to joint positions: {[round(j, 2) for j in joint_values]}°"
-                )
+                print(f" Moving to joint positions: {[round(j, 2) for j in joint_values]}°")
 
                 joints = JointPositions(joint_values)
                 success = self.robot.move_to_joint_positions(joints)

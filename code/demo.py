@@ -4,14 +4,17 @@ UR3e - Fun Demo Routine
 Sequence: 360 spin → dab pose → home → bye-bye wave.
 """
 
-import rclpy
 import time
-from ur3e_lib import UR3eController
-from ur3_types import JointPositions as Jpos
+
+import rclpy
+
 from robot_setup import setup_robot_workspace
+from ur3_types import JointPositions as Jpos
+from ur3e_lib import UR3eController
 
 home = Jpos([0, -90, 0, -90, 0, 0])
 bow = Jpos([0, -45, -100, -30, 0, 0])
+
 
 def main():
     rclpy.init()
@@ -19,7 +22,7 @@ def main():
 
     # Setup robot workspace with collision objects
     workspace = setup_robot_workspace(robot)
-    
+
     # Use safer positions that account for collision objects
     safe_positions = workspace.get_safe_demo_positions()
     home = Jpos(safe_positions["home"])
@@ -34,8 +37,7 @@ def main():
         robot.move_to_joint_positions(bow)
         time.sleep(1)
 
-
-        # Bye-bye wave 
+        # Bye-bye wave
         hand = bow.copy()
         for angle in [-60, 0, -30]:
             hand.wrist1 = angle
