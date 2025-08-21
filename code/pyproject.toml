@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "UR3 MoveIt 2 CLI for ROS 2 Jazzy"
 requires-python = "==3.12.3"
 dependencies = [
-    "numpy>=2.3.2",   # Required by ROS 2 message system
-    "pyyaml>=6.0.2",  # Required by rclpy
+    "numpy>=2.3.2", # Required by ROS 2 message system
+    "opencv-python>=4.11.0.86",
+    "pyyaml>=6.0.2", # Required by rclpy
 ]
