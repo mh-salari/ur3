@@ -145,47 +145,26 @@ class UR3eController(Node):
 
     def get_current_joint_positions(self):
         """
-        Get current joint positions in degrees from MoveIt planning scene (real robot state)
+        Get current joint positions in degrees
 
         Returns:
             JointPositions: Joint positions object with individual joint values in degrees
-            None: If robot state not available or robot not connected
+            None: If joint states not available
         """
-        # Use MoveIt's planning scene to get actual robot state
-        if not self.get_planning_scene_client.service_is_ready():
-            self.get_logger().error("Planning scene service not available - robot may not be connected")
+        if self.current_joint_state is None:
             return None
-            
-        try:
-            request = GetPlanningScene.Request()
-            request.components.components = request.components.ROBOT_STATE
-            
-            future = self.get_planning_scene_client.call_async(request)
-            rclpy.spin_until_future_complete(self, future, timeout_sec=2.0)
-            
-            if not future.done():
-                self.get_logger().error("Timeout getting planning scene - robot may not be connected")
-                return None
-                
-            response = future.result()
-            robot_state = response.scene.robot_state
-            
-            # Extract joint positions from robot state
-            ur_positions = []
-            for joint_name in self.ur_joint_names:
-                if joint_name in robot_state.joint_state.name:
-                    idx = robot_state.joint_state.name.index(joint_name)
-                    ur_positions.append(robot_state.joint_state.position[idx])
-                else:
-                    self.get_logger().error(f"Joint {joint_name} not found in robot state")
-                    return None
 
-            degrees_list = self.radians_to_degrees(ur_positions)
-            return JointPositions(degrees_list)
-            
-        except Exception as e:
-            self.get_logger().error(f"Failed to get current robot state: {e}")
-            return None
+        ur_positions = []
+        for joint_name in self.ur_joint_names:
+            if joint_name in self.current_joint_state.name:
+                idx = self.current_joint_state.name.index(joint_name)
+                ur_positions.append(self.current_joint_state.position[idx])
+            else:
+                self.get_logger().error(f"Joint {joint_name} not found")
+                return None
+
+        degrees_list = self.radians_to_degrees(ur_positions)
+        return JointPositions(degrees_list)
 
     def move_to_joint_positions(self, target_positions, duration_sec=5.0):
         """
@@ -251,7 +230,7 @@ class UR3eController(Node):
         self.get_logger().info("   Planning motion with collision avoidance...")
         try:
             future = self.move_group_client.send_goal_async(goal)
-            rclpy.spin_until_future_complete(self, future, timeout_sec=10.0)
+            rclpy.spin_until_future_complete(self, future, timeout_sec=20.0)
 
             if not future.done():
                 self.get_logger().error(" TIMEOUT: MoveIt goal submission timed out")
@@ -273,7 +252,7 @@ class UR3eController(Node):
 
             # Wait for execution result
             result_future = goal_handle.get_result_async()
-            rclpy.spin_until_future_complete(self, result_future, timeout_sec=30.0)
+            rclpy.spin_until_future_complete(self, result_future, timeout_sec=45.0)
 
             if not result_future.done():
                 self.get_logger().error(" TIMEOUT: MoveIt execution timed out")
@@ -392,7 +371,12 @@ class UR3eController(Node):
             request.scene = planning_scene_diff
             
             future = self.apply_planning_scene_client.call_async(request)
-            rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
+            
+            # Use polling instead of spin_until_future_complete to avoid node context corruption
+            timeout_time = time.time() + 5.0
+            while not future.done() and time.time() < timeout_time:
+                rclpy.spin_once(self, timeout_sec=0.1)
+                time.sleep(0.01)
             
             if future.done() and future.result().success:
                 self.get_logger().info(f"Added collision object '{name}' to planning scene")
@@ -464,7 +448,12 @@ class UR3eController(Node):
             request.scene = planning_scene_diff
             
             future = self.apply_planning_scene_client.call_async(request)
-            rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
+            
+            # Use polling instead of spin_until_future_complete to avoid node context corruption
+            timeout_time = time.time() + 5.0
+            while not future.done() and time.time() < timeout_time:
+                rclpy.spin_once(self, timeout_sec=0.1)
+                time.sleep(0.01)
             
             if future.done() and future.result().success:
                 self.get_logger().info(f"Attached tool '{name}' to {link_name}")
@@ -507,7 +496,12 @@ class UR3eController(Node):
             request.scene = planning_scene_diff
             
             future = self.apply_planning_scene_client.call_async(request)
-            rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
+            
+            # Use polling instead of spin_until_future_complete to avoid node context corruption
+            timeout_time = time.time() + 5.0
+            while not future.done() and time.time() < timeout_time:
+                rclpy.spin_once(self, timeout_sec=0.1)
+                time.sleep(0.01)
             
             if future.done() and future.result().success:
                 self.get_logger().info(f"Removed collision object '{name}'")
