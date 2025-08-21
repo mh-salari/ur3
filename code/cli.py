@@ -16,6 +16,7 @@ import subprocess
 import readline  # Enable arrow keys and command history in input()
 from ur3e_lib import UR3eController
 from ur3_types import JointPositions
+from robot_setup import setup_robot_workspace
 
 
 class UR3eCLI:
@@ -49,6 +50,12 @@ class UR3eCLI:
                 rclpy.init()
             self.robot = UR3eController("ur3e__cli_node")
             print(" Robot connected successfully!")
+            
+            # Setup robot workspace with collision objects
+            print(" Setting up robot workspace...")
+            self.workspace = setup_robot_workspace(self.robot)
+            print(" Workspace collision objects loaded!")
+            
             return True
         except Exception as e:
             print(f" Failed to connect to robot: {e}")

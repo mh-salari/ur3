@@ -8,6 +8,7 @@ import rclpy
 import time
 from ur3e_lib import UR3eController
 from ur3_types import JointPositions as Jpos
+from robot_setup import setup_robot_workspace
 
 home = Jpos([0, -90, 0, -90, 0, 0])
 bow = Jpos([0, -45, -100, -30, 0, 0])
@@ -15,6 +16,14 @@ bow = Jpos([0, -45, -100, -30, 0, 0])
 def main():
     rclpy.init()
     robot = UR3eController("ur3e_demo_node")
+
+    # Setup robot workspace with collision objects
+    workspace = setup_robot_workspace(robot)
+    
+    # Use safer positions that account for collision objects
+    safe_positions = workspace.get_safe_demo_positions()
+    home = Jpos(safe_positions["home"])
+    bow = Jpos(safe_positions["forward_safe"])
 
     try:
         # Go to home locations
